@@ -25,7 +25,12 @@ model.summary()
 
 print(model.predict(x_train))
 
+plt.style.use('dark_background')
 x = np.linspace(0, 1, 100)
 y = model.predict(x)
 plt.plot(x, y)
-plt.show()
+plt.xlabel("Eingabewert $x$")
+plt.ylabel("Ausgabewert $y$")
+plt.tight_layout()
+plt.savefig("predictions_not_10000.svg")
+
