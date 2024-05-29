@@ -7,11 +7,18 @@ import keras
 
 np.random.seed(1337)
 
-x_train = np.array([[0],[1]])
-y_train = np.array([[1], [0]])
+x_train = np.array([0,1])
+print(x_train.ndim)
+print(x_train.shape)
+y_train = np.array([1, 0])
 
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(1, activation='sigmoid'))
+inputs = keras.Input(shape=(1,))
+outputs = keras.layers.Dense(1, activation='sigmoid')(inputs)
+model = keras.Model(inputs, outputs)
+
+#model = keras.models.Sequential()
+#model.add(keras.layers.Input(shape=(1,)))
+#model.add(keras.layers.Dense(1, activation='sigmoid'))
 
 model.compile(loss='mean_squared_error',
               optimizer='adam',

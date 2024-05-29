@@ -8,11 +8,16 @@ import keras
 np.random.seed(1337)
 
 x_train = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-y_train = np.array([[0], [1], [1], [0]])
+y_train = np.array([0, 1, 1, 0])
 
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(2, activation='sigmoid'))
-model.add(keras.layers.Dense(1, activation='linear'))
+inputs = keras.layers.Input(shape=(2,))
+layer1 = keras.layers.Dense(units=2, activation='sigmoid')(inputs)
+outputs = keras.layers.Dense(1, activation='linear')(layer1)
+model = keras.Model(inputs, outputs)
+
+# model = keras.models.Sequential()
+# model.add(keras.layers.Dense(2, activation='sigmoid'))
+# model.add(keras.layers.Dense(1, activation='linear'))
 
 model.compile(loss='mean_squared_error',
               optimizer='adam',
@@ -38,7 +43,7 @@ eingangswerte_grafik = np.vstack((X1_vektor, X2_vektor)).T
 ausgangswerte_grafik = model.predict(eingangswerte_grafik).reshape(X1_raster.shape)
 
 # Fragt die Gewichte der Verbindungen und die Bias-Daten ab
-(gewichte, bias) = model.layers[0].get_weights()
+(gewichte, bias) = model.layers[1].get_weights()
 
 # Contourplot der gerasterten Ausgangswerte in leicht vergroessertem
 # Bereich und Legende

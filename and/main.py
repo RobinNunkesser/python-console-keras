@@ -8,10 +8,14 @@ import keras
 np.random.seed(1337)
 
 x_train = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-y_train = np.array([[0], [0], [0], [1]])
+y_train = np.array([0,0,0,1])
 
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(1, activation='sigmoid'))
+inputs = keras.layers.Input(shape=(2,))
+outputs = keras.layers.Dense(1, activation='sigmoid')(inputs)
+model = keras.Model(inputs, outputs)
+
+#model = keras.models.Sequential()
+#model.add(keras.layers.Dense(1, activation='sigmoid'))
 
 model.compile(loss='mean_squared_error',
               optimizer='adam',
@@ -33,7 +37,7 @@ X2_vektor = X2_raster.flatten()
 eingangswerte_grafik = np.vstack((X1_vektor, X2_vektor)).T
 ausgangswerte_grafik = model.predict(eingangswerte_grafik).reshape(X1_raster.shape)
 
-(gewichte, bias) = model.layers[0].get_weights()
+(gewichte, bias) = model.layers[1].get_weights()
 
 plt.style.use('dark_background')
 plt.contourf(X1_raster, X2_raster, ausgangswerte_grafik, 100, cmap="jet")
