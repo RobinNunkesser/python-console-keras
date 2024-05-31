@@ -22,7 +22,7 @@ model.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['accuracy'])
 
-model.fit(x=x_train, y=y_train, epochs=10000, verbose=0)
+history = model.fit(x=x_train, y=y_train, epochs=10000, verbose=0)
 
 keras.utils.plot_model(model, to_file='model_not_complete.png', show_shapes=True, show_layer_names=True,
                        expand_nested=True, show_layer_activations=True)
@@ -44,4 +44,17 @@ plt.xlabel("Eingabewert $x$")
 plt.ylabel("Ausgabewert $y$")
 plt.tight_layout()
 plt.savefig("predictions_linear_not_10000.svg")
+
+plt.figure()
+
+acc = history.history["accuracy"]
+loss = history.history["loss"]
+epochs = range(len(acc))
+
+plt.plot(epochs, acc, label="Korrektklassifizierungsrate")
+plt.plot(epochs, loss, label="Verlust")
+plt.title("Korrektklassifizierungsrate und Verlust")
+plt.legend()
+plt.tight_layout()
+plt.savefig("train_acc_loss_not.svg")
 
