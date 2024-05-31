@@ -11,8 +11,8 @@ x_train = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 y_train = np.array([0, 1, 1, 0])
 
 inputs = keras.layers.Input(shape=(2,))
-layer1 = keras.layers.Dense(units=2, activation='sigmoid')(inputs)
-outputs = keras.layers.Dense(1, activation='linear')(layer1)
+layer1 = keras.layers.Dense(units=2, activation='sigmoid')
+outputs = keras.layers.Dense(1, activation='linear')(layer1(inputs))
 model = keras.Model(inputs, outputs)
 
 # model = keras.models.Sequential()
@@ -33,7 +33,7 @@ print(model.predict(x_train))
 
 # Bereitet die grafische Ausgabe mittels contourf vor
 # und rastert die Eingabewerte fuer das Modell
-x = np.linspace(0, 1, 100)
+x = np.linspace(-0.01, 1.01, 103)
 (X1_raster, X2_raster) = np.meshgrid(x, x)
 X1_vektor = X1_raster.flatten()
 X2_vektor = X2_raster.flatten()
@@ -42,8 +42,9 @@ X2_vektor = X2_raster.flatten()
 eingangswerte_grafik = np.vstack((X1_vektor, X2_vektor)).T
 ausgangswerte_grafik = model.predict(eingangswerte_grafik).reshape(X1_raster.shape)
 
-# Fragt die Gewichte der Verbindungen und die Bias-Daten ab
-(gewichte, bias) = model.layers[1].get_weights()
+# Set dummy limits
+ausgangswerte_grafik[0, 0] = 1.25
+ausgangswerte_grafik[102, 102] = 0.0
 
 # Contourplot der gerasterten Ausgangswerte in leicht vergroessertem
 # Bereich und Legende
