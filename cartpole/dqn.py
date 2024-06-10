@@ -5,7 +5,7 @@ import numpy as np
 from collections import deque
 import os
 
-os.environ["KERAS_BACKEND"] = "jax"
+os.environ["KERAS_BACKEND"] = "tensorflow"
 import keras
 
 EPISODES = 1000
@@ -25,7 +25,7 @@ class DQNAgent:
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
         model = keras.models.Sequential()
-        model.add(keras.layers.Dense(24, input_dim=self.state_size, activation='relu'))
+        model.add(keras.layers.Dense(24, activation='relu'))
         model.add(keras.layers.Dense(24, activation='relu'))
         model.add(keras.layers.Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',
@@ -71,8 +71,8 @@ if __name__ == "__main__":
     batch_size = 32
 
     for e in range(EPISODES):
-        state = env.reset()
-        state = np.reshape(state[0], [1, state_size])
+        state = env.reset()[0]
+        state = np.reshape(state, [1, state_size])
         for time in range(500):
             # env.render()
             action = agent.act(state)

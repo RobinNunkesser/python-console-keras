@@ -7,6 +7,7 @@ import keras
 from keras import ops
 from keras import layers
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 # Configuration parameters for the whole setup
 gamma = 0.99  # Discount factor for past rewards
@@ -25,13 +26,35 @@ critic = layers.Dense(1)(common)
 
 model = keras.Model(inputs=inputs, outputs=[action, critic])
 
+keras.utils.plot_model(model, to_file='model_actorcritic_complete.svg', show_shapes=True, show_layer_names=True,
+                       expand_nested=True, show_layer_activations=True)
+
 optimizer = keras.optimizers.Adam(learning_rate=0.01)
 huber_loss = keras.losses.Huber()
 action_probs_history = []
 critic_value_history = []
+action_losses_history = []
+critic_losses_history = []
+losses_history = []
 rewards_history = []
 running_reward = 0
 episode_count = 0
+
+
+def play():
+    env = gym.make("CartPole-v1",render_mode='human')
+    state = env.reset()[0]
+    with tf.GradientTape() as tape:
+        for time in range(500):
+            env.render()
+            state = ops.convert_to_tensor(state)
+            state = ops.expand_dims(state, 0)
+            action_probs, _ = model(state)
+            action = np.random.choice(num_actions, p=np.squeeze(action_probs))
+            state, reward, terminated, _, _ = env.step(action)
+            if terminated:
+                print("score: {}".format(time))
+                break
 
 while True:  # Run until solved
     state = env.reset()[0]
@@ -56,11 +79,11 @@ while True:  # Run until solved
             action_probs_history.append(ops.log(action_probs[0, action]))
 
             # Apply the sampled action in our environment
-            state, reward, done, _, _ = env.step(action)
+            state, reward, terminated, _, _ = env.step(action)
             rewards_history.append(reward)
             episode_reward += reward
 
-            if done:
+            if terminated:
                 break
 
         # Update running reward to check condition for solving
@@ -91,7 +114,10 @@ while True:  # Run until solved
             # of `log_prob` and ended up receiving a total reward = `ret`.
             # The actor must be updated so that it predicts an action that leads to
             # high rewards (compared to critic's estimate) with high probability.
-            diff = ret - value
+            if ret < value:
+                diff = ret - value
+            else:
+                diff = ret - value # Different approach like  1 - value / ret is possible for positive diff
             actor_losses.append(-log_prob * diff)  # actor loss
 
             # The critic must be updated so that it predicts a better estimate of
@@ -100,8 +126,33 @@ while True:  # Run until solved
                 huber_loss(ops.expand_dims(value, 0), ops.expand_dims(ret, 0))
             )
 
+        if episode_count % 1 == 0:
+            steps = range(len(action_probs_history))
+            plt.style.use('dark_background')
+ #           plt.plot(steps, action_probs_history, label="ln(p(action))")
+            plt.plot(steps, critic_value_history, label="Belohnungsprognose Critic")
+            plt.plot(steps, returns, label="Gewichtete Zukunftsbelohnung")
+            plt.plot(steps, critic_losses, label="Verlust Critic")
+#            plt.plot(steps, rewards_history, label="Rewards history")
+            plt.title("Belohnungsprognose Critic")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig("critic_cartpole_e{}.svg".format(episode_count))
+            plt.close()
+            plt.plot(steps, action_probs_history, label="Entscheidungssicherheit Actor")
+            plt.plot(steps, actor_losses, label="Verlust Actor")
+            plt.title("Entscheidungssicherheit Actor")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig("actor_cartpole_e{}.svg".format(episode_count))
+            plt.close()
         # Backpropagation
-        loss_value = sum(actor_losses) + sum(critic_losses)
+        actor_losses_sum = sum(actor_losses)
+        critic_losses_sum = sum(critic_losses)
+        action_losses_history.append(actor_losses_sum/len(actor_losses))
+        critic_losses_history.append(critic_losses_sum/len(actor_losses))
+        loss_value = actor_losses_sum + critic_losses_sum
+        losses_history.append(loss_value/len(actor_losses))
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
@@ -118,4 +169,16 @@ while True:  # Run until solved
 
     if running_reward > 195:  # Condition to consider the task solved
         print("Solved at episode {}!".format(episode_count))
+        episodes = range(len(action_losses_history))
+        plt.style.use('dark_background')
+        plt.plot(episodes, action_losses_history, label="Verlustfunktion Action")
+        plt.plot(episodes, critic_losses_history, label="Verlustfunktion Critic")
+        plt.plot(episodes, losses_history, label="Verlustfunktion")
+        plt.title("Verlustfunktionen")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig("losses_cartpole.svg")
+        plt.close()
+        play()
         break
+
